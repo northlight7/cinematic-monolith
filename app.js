@@ -1,4 +1,4 @@
-import {T,mat,mesh,box,cyl,texture,noiseTexture,tube,createStage,cameraAt,span,mix,initUI} from './core.js'
+import {T,mat,mesh,box,cyl,texture,noiseTexture,tube,createStage,cameraAt,span,mix,initUI} from './core.js?v=composition-8'
 initUI()
 const s=createStage({background:'#d7c9b4',exposure:1.05}),{scene,camera}=s
 s.key.position.set(-7,10,6);s.key.intensity=3.5;s.fill.intensity=.6;scene.environmentIntensity=.5;scene.fog=new T.Fog('#d7c9b4',20,60);s.ground.material.color.set('#a2957f')
@@ -41,7 +41,7 @@ const leafGeo=new T.PlaneGeometry(2,2,8,2),leafMat=mat('#68724f',.72,0,{side:T.D
 const foliage=new T.InstancedMesh(leafGeo,leafMat,520),dummy=new T.Object3D()
 for(let i=0;i<520;i++){const a=i*2.39996,r=Math.sqrt((i%97)/97)*.96;dummy.position.set(Math.cos(a)*r,2.28+Math.sin(i*.73)*.42+(1-r)*.18,Math.sin(a)*r*.8);dummy.scale.set(.09,.018,.03);dummy.rotation.set(i,i*.3,i*.6);dummy.updateMatrix();foliage.setMatrixAt(i,dummy.matrix)}foliage.castShadow=foliage.receiveShadow=true;tree.add(foliage)
 // A ground plane with actual topography supplies changing depth in aerial and low views.
-const terrainGeo=new T.PlaneGeometry(110,110,60,60);terrainGeo.rotateX(-Math.PI/2);const pos=terrainGeo.attributes.position
+const terrainGeo=new T.PlaneGeometry(24,24,40,40);terrainGeo.rotateX(-Math.PI/2);const pos=terrainGeo.attributes.position
 for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i),d=Math.hypot(x,z),rise=span(d,8,24);pos.setY(i,-.4+rise*(Math.sin(x*.13+1)*Math.cos(z*.08)*1.3+Math.sin(z*.2+x*.1)*.7))}terrainGeo.computeVertexNormals();const terrain=mesh(terrainGeo,mat('#b5a58c',1),scene);terrain.castShadow=false
 const sun=mesh(new T.SphereGeometry(1.3,24,16),new T.MeshBasicMaterial({color:'#fbe0ae'}),scene,[-12,10,-25]);sun.castShadow=false
 const planMat=new T.LineBasicMaterial({color:'#5d6155',transparent:true,opacity:.35});const plan=new T.Group();scene.add(plan)
@@ -55,14 +55,14 @@ s.canvas.addEventListener('pointerleave',()=>{probeIn=false;probe.visible=false;
 let lightStudy=.55
 const range=document.querySelector('[data-light]')
 range.addEventListener('input',()=>{lightStudy=Number(range.value)/100;document.querySelector('[data-hour]').textContent=lightStudy<.33?'09:00 / Morning':lightStudy<.67?'13:00 / Midday':'18:00 / Golden hour';s.wake()})
-const shots=[{p:0,pos:[11,9,12],target:[-1.7,1.2,0],mobile:[18,14,20],mobileTarget:[0,3.6,0]},{p:.33,pos:[11,10,16],target:[3.8,3.1,0],mobile:[18,14,20],mobileTarget:[0,6.6,0]},{p:.64,pos:[-5.7,3.1,8.2],target:[-2.8,1.6,0],mobile:[-14,7,18],mobileTarget:[0,6.2,0]},{p:.82,pos:[2,1.25,5.5],target:[0,1.6,0],mobile:[4.2,2.7,8],mobileTarget:[0,3.2,0]},{p:1,pos:[.65,1.35,1.0],target:[-.1,2.4,-1.4],mobile:[.6,1.1,1.2],mobileTarget:[-.1,2.9,-1.2]}]
+const shots=[{p:0,pos:[12,11,15],target:[0,1.8,0],frame:[.75,.55],mobile:[16,17,25],mobileTarget:[0,1.8,0],mobileFrame:[.5,.77]},{p:.33,pos:[8.6,10,16],target:[0,2.5,0],frame:[.75,.55],mobile:[13,16,26],mobileTarget:[0,2.5,0],mobileFrame:[.5,.77]},{p:.64,pos:[4.2,4.6,10.5],target:[0,1.8,0],frame:[.75,.55],mobile:[6,7,25],mobileTarget:[0,1.8,0],mobileFrame:[.5,.77]},{p:.82,pos:[2,1.6,5.6],target:[0,1.8,-.3],frame:[.64,.52],mobile:[2,2.7,9],mobileTarget:[0,1.8,-.3],mobileFrame:[.5,.55]},{p:.94,pos:[1.3,1.4,2.6],target:[.3,1.9,-1],frame:[.58,.5],mobile:[1.3,1.4,2.6],mobileTarget:[.3,1.9,-1],mobileFrame:[.5,.43]},{p:1,pos:[.65,1.35,.8],target:[0,2.2,-1.5],frame:[.56,.5],mobile:[.65,1.35,.8],mobileTarget:[0,2.2,-1.5],mobileFrame:[.5,.4]}]
 s.update(({p,time,dt,mobile,pointer,activeMotion})=>{cameraAt(camera,p,shots,mobile,pointer)
  const explode=span(p,.12,.3)*(1-span(p,.4,.55));levels[1].position.y=2.1+explode*1.5;roof.position.y=4+explode*3.0;plan.visible=p<.55;planMat.opacity=.12+explode*.28
- const sunT=p>.5?lightStudy:mix(.25,.55,p*2);s.key.position.set(mix(-9,7,sunT),mix(11,3,sunT),mix(5,-3,sunT));s.key.color.set(new T.Color('#fff6df').lerp(new T.Color('#ffa764'),sunT));s.key.intensity=mix(3.2,4.4,sunT);const bg=new T.Color('#d7d1bf').lerp(new T.Color('#bb8f6c'),sunT*.7);scene.background.copy(bg);scene.fog.color.copy(bg);sun.position.x=mix(-15,12,sunT);sun.position.y=mix(13,5,sunT)
+ const sunT=p>.5?lightStudy:mix(.25,.55,p*2);s.key.position.set(mix(-9,7,sunT),mix(11,3,sunT),mix(5,-3,sunT));s.key.color.set(new T.Color('#fff6df').lerp(new T.Color('#ffa764'),sunT));s.key.intensity=mix(3.2,4.4,sunT);const bg=new T.Color('#d7d1bf').lerp(new T.Color('#bb8f6c'),sunT*.7);document.querySelector('.scene-backdrop').style.background=`linear-gradient(140deg,#e7dfce,${bg.getStyle()})`;scene.fog.color.copy(bg);sun.position.x=mix(-15,12,sunT);sun.position.y=mix(13,5,sunT)
  foliage.rotation.y=activeMotion?Math.sin(time*.6)*.012:0
  if(probeIn&&!mobile&&time-probeTime>.05){probeTime=time;probeRay.setFromCamera(probeMouse,camera);const hit=probeRay.intersectObjects(probeTargets,false)[0];probe.visible=!!hit
  const label=document.querySelector('[data-probe]'),cursor=document.querySelector('.cursor')
- if(hit){const normal=hit.face.normal.clone().transformDirection(hit.object.matrixWorld);probe.position.copy(hit.point).addScaledVector(normal,.02);probe.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),normal);const name=hit.object.material===concrete?'CAST CONCRETE':hit.object.material===timber?'TIMBER SCREEN':'REFLECTIVE GLASS';label.textContent=name;cursor.textContent='MATERIAL';cursor.classList.add('expanded')}else{label.textContent='';cursor.textContent='';cursor.classList.remove('expanded')}
+ if(hit){const normal=hit.face.normal.clone().transformDirection(hit.object.matrixWorld);probe.position.copy(hit.point).addScaledVector(normal,.02);probe.scale.setScalar(Math.max(.02,camera.position.distanceTo(hit.point)*.04));probe.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),normal);const name=hit.object.material===concrete?'CAST CONCRETE':hit.object.material===timber?'TIMBER SCREEN':'REFLECTIVE GLASS';label.textContent=name;cursor.textContent='MATERIAL';cursor.classList.add('expanded')}else{label.textContent='';cursor.textContent='';cursor.classList.remove('expanded')}
  }
  if(!probeIn||mobile)probe.visible=false
  const material=document.querySelector('[data-material]');material.style.opacity=p>.87?'1':'0';s.host.dataset.daylight=sunT.toFixed(2);s.host.dataset.explosion=explode.toFixed(2)
