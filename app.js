@@ -37,14 +37,12 @@ box(2.28,.04,2.28,mat('#9b9077',.95),house,[0,.2,0],.02)
 const tree=new T.Group();tree.position.set(0,.23,0);house.add(tree)
 const bark=mat('#685540',.95);tube([[0,0,0],[.06,.7,.02],[-.1,1.4,0],[.06,2,.08],[.1,2.65,.05]],.065,bark,tree)
 for(let i=0;i<7;i++){const a=i*2.399;const x=Math.cos(a)*.6,z=Math.sin(a)*.6;tube([[0,.8+i*.15,0],[x*.55,1.6+i*.15,z*.6],[x,2+i*.12,z]],.025,bark,tree)}
-const leafGeo=new T.SphereGeometry(1,6,3),leafMat=mat('#68724f',.72)
+const leafGeo=new T.PlaneGeometry(2,2,8,2),leafMat=mat('#68724f',.72,0,{side:T.DoubleSide});const leafPositions=leafGeo.attributes.position;for(let i=0;i<leafPositions.count;i++){const x=leafPositions.getX(i);leafPositions.setY(i,leafPositions.getY(i)*Math.sqrt(Math.max(0,1-x*x)));leafPositions.setZ(i,(1-x*x)*.4+Math.sin(x*Math.PI)*.06)}leafGeo.computeVertexNormals()
 const foliage=new T.InstancedMesh(leafGeo,leafMat,520),dummy=new T.Object3D()
 for(let i=0;i<520;i++){const a=i*2.39996,r=Math.sqrt((i%97)/97)*.96;dummy.position.set(Math.cos(a)*r,2.28+Math.sin(i*.73)*.42+(1-r)*.18,Math.sin(a)*r*.8);dummy.scale.set(.09,.018,.03);dummy.rotation.set(i,i*.3,i*.6);dummy.updateMatrix();foliage.setMatrixAt(i,dummy.matrix)}foliage.castShadow=foliage.receiveShadow=true;tree.add(foliage)
 // A ground plane with actual topography supplies changing depth in aerial and low views.
 const terrainGeo=new T.PlaneGeometry(110,110,60,60);terrainGeo.rotateX(-Math.PI/2);const pos=terrainGeo.attributes.position
 for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i),d=Math.hypot(x,z),rise=span(d,8,24);pos.setY(i,-.4+rise*(Math.sin(x*.13+1)*Math.cos(z*.08)*1.3+Math.sin(z*.2+x*.1)*.7))}terrainGeo.computeVertexNormals();const terrain=mesh(terrainGeo,mat('#b5a58c',1),scene);terrain.castShadow=false
-const landscape=new T.Group();scene.add(landscape)
-for(let i=0;i<17;i++){const a=i*2.39996,r=9+i*.65,x=Math.cos(a)*r,z=Math.sin(a)*r;const trunk=cyl(.06,1.7,bark,landscape,[x,.35,z],.11,8);for(let j=0;j<3;j++){const foliage=mesh(new T.IcosahedronGeometry(1,1),leafMat,landscape,[x+Math.sin(i+j)*.4,1.5+j*.5,z+Math.cos(i-j)*.4]);foliage.scale.set(.8-j*.13,.55,.7-j*.1)}}
 const sun=mesh(new T.SphereGeometry(1.3,24,16),new T.MeshBasicMaterial({color:'#fbe0ae'}),scene,[-12,10,-25]);sun.castShadow=false
 const planMat=new T.LineBasicMaterial({color:'#5d6155',transparent:true,opacity:.35});const plan=new T.Group();scene.add(plan)
 for(let i=-5;i<=5;i++){const g=new T.BufferGeometry().setFromPoints([new T.Vector3(i*1.1,-.32,-6),new T.Vector3(i*1.1,-.32,6)]);plan.add(new T.Line(g,planMat));const h=new T.BufferGeometry().setFromPoints([new T.Vector3(-6,-.32,i*1.1),new T.Vector3(6,-.32,i*1.1)]);plan.add(new T.Line(h,planMat))}
