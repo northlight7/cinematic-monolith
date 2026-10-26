@@ -1,6 +1,6 @@
-import {T,mat,mesh,box,cyl,texture,noiseTexture,tube,createStage,cameraAt,span,mix,initUI} from './core.js?v=composition-8'
+import {T,mat,mesh,box,cyl,texture,noiseTexture,tube,createStage,cameraAt,span,mix,initUI} from './core.js?v=identity-7'
 initUI()
-const s=createStage({background:'#d7c9b4',exposure:1.05}),{scene,camera}=s
+const s=createStage({staticProgress:.51,background:'#d7c9b4',exposure:1.05}),{scene,camera}=s
 s.key.position.set(-7,10,6);s.key.intensity=3.5;s.fill.intensity=.6;scene.environmentIntensity=.5;scene.fog=new T.Fog('#d7c9b4',20,60);s.ground.material.color.set('#a2957f')
 const concrete=mat('#d1c8b5',.87,0,{map:noiseTexture('#c8c1b4',28)}),stone=mat('#918975',.96),timber=mat('#65503a',.7),dark=mat('#2e342c',.65),windowMat=mat('#526560',.12,.62,{transparent:true,opacity:.34,envMapIntensity:1.4}),grassMat=mat('#6b7052',.97)
 const house=new T.Group();scene.add(house)
@@ -8,7 +8,7 @@ box(9,.35,7.4,stone,house,[0,-.13,0],.03);box(8.5,.11,6.9,concrete,house,[0,.1,0
 const pool=box(2.8,.05,2.1,mat('#486c6b',.12,.65),house,[-2.35,.18,2.3],.03)
 for(let i=0;i<5;i++)box(3,.1,1.1,concrete,house,[2.3,-.3+i*.1,4.5-i*.25],.02)
 function slab(parent,y){const shape=new T.Shape();shape.moveTo(-3.6,-2.5);shape.lineTo(3.6,-2.5);shape.lineTo(3.6,2.5);shape.lineTo(-3.6,2.5);shape.closePath();const h=new T.Path();h.moveTo(-1.25,-1.25);h.lineTo(-1.25,1.25);h.lineTo(1.25,1.25);h.lineTo(1.25,-1.25);h.closePath();shape.holes.push(h);const g=new T.ExtrudeGeometry(shape,{depth:.18,bevelEnabled:true,bevelSegments:2,steps:1,bevelSize:.035,bevelThickness:.025});g.rotateX(-Math.PI/2);return mesh(g,concrete,parent,[0,y,0])}
-const levels=[]
+const levels=[],screens=[]
 for(let level=0;level<2;level++){const g=new T.Group();g.position.y=level*1.9+.2;house.add(g);levels.push(g);slab(g,0)
  for(const x of [-3.3,3.3])for(const z of [-2.2,2.2])box(.16,1.72,.16,concrete,g,[x,.94,z],.015)
  for(const z of [-2.35,2.35]){
@@ -16,7 +16,7 @@ for(let level=0;level<2;level++){const g=new T.Group();g.position.y=level*1.9+.2
   for(let i=0;i<9;i++)box(.035,1.6,.05,dark,g,[-3.2+i*.8,.93,z],.002)
  }
  for(const x of [-3.4,3.4]){box(.03,1.6,4.5,windowMat,g,[x,.94,0],.005).castShadow=false
-  const geo=new T.BoxGeometry(.11,1.58,.08),im=new T.InstancedMesh(geo,timber,29),o=new T.Object3D();for(let i=0;i<29;i++){o.position.set(x+(x>0?.1:-.1),.94,-2.2+i*.157);o.rotation.y=.28;o.updateMatrix();im.setMatrixAt(i,o.matrix)}im.castShadow=im.receiveShadow=true;g.add(im)
+  const geo=new T.BoxGeometry(.11,1.58,.08),im=new T.InstancedMesh(geo,timber,29),o=new T.Object3D();for(let i=0;i<29;i++){o.position.set(x+(x>0?.1:-.1),.94,-2.2+i*.157);o.rotation.y=.28;o.updateMatrix();im.setMatrixAt(i,o.matrix)}im.castShadow=im.receiveShadow=true;g.add(im);screens.push({im,x})
  }
  // The courtyard stays open through both floors.
  for(const z of [-1.28,1.28]){if(z>0&&level===0){box(1.475,1.65,.03,windowMat,g,[-.4875,.95,z],.005).castShadow=false;box(.175,1.65,.03,windowMat,g,[1.1375,.95,z],.005).castShadow=false}else box(2.45,1.65,.03,windowMat,g,[0,.95,z],.005).castShadow=false;for(const x of [-1.2,1.2])box(.035,1.65,.04,dark,g,[x,.95,z],.003)}
@@ -46,24 +46,27 @@ for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i),d=Math.hypot(x,z)
 const sun=mesh(new T.SphereGeometry(1.3,24,16),new T.MeshBasicMaterial({color:'#fbe0ae'}),scene,[-12,10,-25]);sun.castShadow=false
 const planMat=new T.LineBasicMaterial({color:'#5d6155',transparent:true,opacity:.35});const plan=new T.Group();scene.add(plan)
 for(let i=-5;i<=5;i++){const g=new T.BufferGeometry().setFromPoints([new T.Vector3(i*1.1,-.32,-6),new T.Vector3(i*1.1,-.32,6)]);plan.add(new T.Line(g,planMat));const h=new T.BufferGeometry().setFromPoints([new T.Vector3(-6,-.32,i*1.1),new T.Vector3(6,-.32,i*1.1)]);plan.add(new T.Line(h,planMat))}
-const probeRay=new T.Raycaster(),probeMouse=new T.Vector2(),probeTargets=[]
-house.traverse(o=>{if(o.isMesh&&!o.isInstancedMesh&&[concrete,timber,windowMat].includes(o.material))probeTargets.push(o)})
-const probe=mesh(new T.TorusGeometry(.12,.006,6,32),new T.MeshBasicMaterial({color:'#fff0ba',depthTest:false}),scene);probe.castShadow=probe.receiveShadow=false;probe.visible=false;probe.renderOrder=10
-let probeIn=false,probeTime=0
-s.canvas.addEventListener('pointermove',e=>{probeIn=true;probeMouse.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1)})
-s.canvas.addEventListener('pointerleave',()=>{probeIn=false;probe.visible=false;document.querySelector('[data-probe]').textContent='';const c=document.querySelector('.cursor');c.classList.remove('expanded');c.textContent=''})
+// A dimensional drawing is occupied by the structure as it is built, floor by floor.
+const drawingPoints=[]
+for(const y of [.2,2.1,4.05])for(const loop of [[[-3.6,-2.5],[3.6,-2.5],[3.6,2.5],[-3.6,2.5]],[[-1.25,-1.25],[1.25,-1.25],[1.25,1.25],[-1.25,1.25]]]){for(let i=0;i<4;i++){const a=loop[i],b=loop[(i+1)%4];drawingPoints.push(new T.Vector3(a[0],y,a[1]),new T.Vector3(b[0],y,b[1]))}}
+for(const x of [-3.6,3.6])for(const z of [-2.5,2.5])drawingPoints.push(new T.Vector3(x,.2,z),new T.Vector3(x,4.05,z))
+const drawingMat=new T.LineBasicMaterial({color:'#505b48',transparent:true,opacity:.52}),drawing=new T.LineSegments(new T.BufferGeometry().setFromPoints(drawingPoints),drawingMat);scene.add(drawing)
+let lightHover=false,louverAngle=.28
 let lightStudy=.55
-const range=document.querySelector('[data-light]')
+const range=document.querySelector('[data-light]');const lightControl=document.querySelector('.light-control');lightControl.addEventListener('pointerenter',()=>{lightHover=true;s.wake()});lightControl.addEventListener('pointerleave',()=>{lightHover=false;s.wake()});lightControl.addEventListener('focusin',()=>{lightHover=true;s.wake()});lightControl.addEventListener('focusout',()=>{lightHover=false;s.wake()})
 range.addEventListener('input',()=>{lightStudy=Number(range.value)/100;document.querySelector('[data-hour]').textContent=lightStudy<.33?'09:00 / Morning':lightStudy<.67?'13:00 / Midday':'18:00 / Golden hour';s.wake()})
 const shots=[{p:0,pos:[12,11,15],target:[0,1.8,0],frame:[.75,.55],mobile:[16,17,25],mobileTarget:[0,1.8,0],mobileFrame:[.5,.77]},{p:.33,pos:[8.6,10,16],target:[0,2.5,0],frame:[.75,.55],mobile:[13,16,26],mobileTarget:[0,2.5,0],mobileFrame:[.5,.77]},{p:.64,pos:[4.2,4.6,10.5],target:[0,1.8,0],frame:[.75,.55],mobile:[6,7,25],mobileTarget:[0,1.8,0],mobileFrame:[.5,.77]},{p:.82,pos:[2,1.6,5.6],target:[0,1.8,-.3],frame:[.64,.52],mobile:[2,2.7,9],mobileTarget:[0,1.8,-.3],mobileFrame:[.5,.55]},{p:.94,pos:[1.3,1.4,2.6],target:[.3,1.9,-1],frame:[.58,.5],mobile:[1.3,1.4,2.6],mobileTarget:[.3,1.9,-1],mobileFrame:[.5,.43]},{p:1,pos:[.65,1.35,.8],target:[0,2.2,-1.5],frame:[.56,.5],mobile:[.65,1.35,.8],mobileTarget:[0,2.2,-1.5],mobileFrame:[.5,.4]}]
-s.update(({p,time,dt,mobile,pointer,activeMotion})=>{cameraAt(camera,p,shots,mobile,pointer)
- const explode=span(p,.12,.3)*(1-span(p,.4,.55));levels[1].position.y=2.1+explode*1.5;roof.position.y=4+explode*3.0;plan.visible=p<.55;planMat.opacity=.12+explode*.28
- const sunT=p>.5?lightStudy:mix(.25,.55,p*2);s.key.position.set(mix(-9,7,sunT),mix(11,3,sunT),mix(5,-3,sunT));s.key.color.set(new T.Color('#fff6df').lerp(new T.Color('#ffa764'),sunT));s.key.intensity=mix(3.2,4.4,sunT);const bg=new T.Color('#d7d1bf').lerp(new T.Color('#bb8f6c'),sunT*.7);document.querySelector('.scene-backdrop').style.background=`linear-gradient(140deg,#e7dfce,${bg.getStyle()})`;scene.fog.color.copy(bg);sun.position.x=mix(-15,12,sunT);sun.position.y=mix(13,5,sunT)
- foliage.rotation.y=activeMotion?Math.sin(time*.6)*.012:0
- if(probeIn&&!mobile&&time-probeTime>.05){probeTime=time;probeRay.setFromCamera(probeMouse,camera);const hit=probeRay.intersectObjects(probeTargets,false)[0];probe.visible=!!hit
- const label=document.querySelector('[data-probe]'),cursor=document.querySelector('.cursor')
- if(hit){const normal=hit.face.normal.clone().transformDirection(hit.object.matrixWorld);probe.position.copy(hit.point).addScaledVector(normal,.02);probe.scale.setScalar(Math.max(.02,camera.position.distanceTo(hit.point)*.04));probe.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),normal);const name=hit.object.material===concrete?'CAST CONCRETE':hit.object.material===timber?'TIMBER SCREEN':'REFLECTIVE GLASS';label.textContent=name;cursor.textContent='MATERIAL';cursor.classList.add('expanded')}else{label.textContent='';cursor.textContent='';cursor.classList.remove('expanded')}
- }
- if(!probeIn||mobile)probe.visible=false
- const material=document.querySelector('[data-material]');material.style.opacity=p>.87?'1':'0';s.host.dataset.daylight=sunT.toFixed(2);s.host.dataset.explosion=explode.toFixed(2)
+const cameraProgress=p=>span(p,.42,1)
+const screenPose=new T.Object3D()
+s.update(({p,time,dt,mobile,activeMotion})=>{
+ cameraAt(camera,cameraProgress(p),shots,mobile)
+ const lower=.2+.8*span(p,.005,.18),upper=span(p,.16,.34),canopy=span(p,.3,.46)
+ levels[0].scale.y=lower;levels[1].position.y=2.1;levels[1].scale.y=Math.max(.001,upper);levels[1].visible=upper>.005
+ roof.position.set(-3.6*(1-canopy),4,0);roof.scale.x=Math.max(.001,canopy);roof.visible=canopy>.005
+ drawingMat.opacity=(1-span(p,.25,.47))*.52;drawing.visible=p<.47;plan.visible=p<.58;planMat.opacity=.34*(1-span(p,.38,.58))
+ const sunT=p>.5?lightStudy:mix(.2,.55,span(p,.18,.5));s.key.position.set(mix(-9,7,sunT),mix(11,3,sunT),mix(5,-3,sunT));s.key.color.set(new T.Color('#fff6df').lerp(new T.Color('#ffa764'),sunT));s.key.intensity=mix(3.2,4.4,sunT);const bg=new T.Color('#d7d1bf').lerp(new T.Color('#bb8f6c'),sunT*.7);document.querySelector('.scene-backdrop').style.background=`linear-gradient(140deg,#e7dfce,${bg.getStyle()})`;scene.fog.color.copy(bg);sun.position.x=mix(-15,12,sunT);sun.position.y=mix(13,5,sunT)
+ const desiredAngle=.12+sunT*.6+(lightHover?.4:0);louverAngle=activeMotion?mix(louverAngle,desiredAngle,1-Math.exp(-dt*8)):desiredAngle
+ for(const {im,x} of screens){for(let i=0;i<29;i++){screenPose.position.set(x+(x>0?.1:-.1),.94,-2.2+i*.157);screenPose.rotation.y=louverAngle;screenPose.updateMatrix();im.setMatrixAt(i,screenPose.matrix)}im.instanceMatrix.needsUpdate=true}
+ foliage.rotation.y=activeMotion?Math.sin(time*.6)*.006:0
+ document.querySelector('[data-material]').style.opacity=p>.87?'1':'0';s.host.dataset.daylight=sunT.toFixed(2);s.host.dataset.cameraProgress=cameraProgress(p).toFixed(3);s.host.dataset.construction=[lower,upper,canopy].map(v=>v.toFixed(2)).join(',');s.host.dataset.louvers=louverAngle.toFixed(2)
 })
